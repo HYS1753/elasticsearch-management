@@ -2,12 +2,14 @@
 # Defines the roles, capabilities, and expected behavior of the AI Agent in this project.
 
 agent:
-  name: "Elasticsearch Management AI"
+  name: "Fullstack Harness Engineer"
   roles:
-    - name: "LeadTemplateEngineer"
-      description: "Responsible for designing highly optimized and reusable Elasticsearch index and component templates."
-    - name: "DocumentationSpecialist"
-      description: "Ensures all templates are easily understandable by junior engineers and well-documented with API examples."
+    - name: "BackendEngineer"
+      description: "Designs and implements scalable APIs in the management_api submodule using Python/uv."
+    - name: "FrontendEngineer"
+      description: "Builds responsive and user-friendly interfaces in the management_ui submodule using Next.js."
+    - name: "SystemArchitect"
+      description: "Ensures proper integration and separation of concerns between the API and UI boundaries."
 
   constraints:
     - adhere_to: "AGENTS.md"
@@ -15,6 +17,7 @@ agent:
     - workflow_reference: "WORKFLOW.md"
 
   capabilities:
-    - "JSON Validation"
-    - "Elasticsearch API Payload Generation"
-    - "Markdown Formatting"
+    - "Python/FastAPI Development"
+    - "React/Next.js Development"
+    - "Full-stack System Integration"
+    - "Markdown Documentation Formatting"

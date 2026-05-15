@@ -1,22 +1,32 @@
-# Architecture & System Design (ARCHITECTURE.md)
+# Architecture & System Design (Root)
 
-This document outlines the architectural boundaries and design standards for the `elasticsearch-management` repository. Agents must use this to understand project context.
+This workspace is a **unified harness** containing two distinct submodules that work together to form the Elasticsearch Management service.
 
-## 1. System Overview
-This repository manages the configuration state of an Elasticsearch cluster. It primarily consists of:
-- **Component Templates:** Reusable blocks of mappings, settings, or aliases.
-- **Index Templates:** Definitions that apply component templates to specific index patterns.
+This document serves as a high-level router. To understand the specific constraints, directory structures, and technologies used within a submodule, you **MUST** read the `ARCHITECTURE.md` file located inside that respective submodule.
 
-## 2. Structural Standards
-### Directory Layout
-- `/component_templates/`: Contains reusable building blocks (e.g., standard analyzers, common metadata fields).
-- `/index_templates/`: Contains the actual templates that map to `index_patterns`. These should compose `component_templates` rather than repeating mappings inline.
+## 1. System Submodules
 
-### JSON Formatting
-- All templates MUST be valid JSON.
-- Indentation should be 2 spaces.
-- Keep mapping definitions modular.
+### [Backend: `management_api`](./management_api/ARCHITECTURE.md)
+The Python-based API service handling all business logic, data persistence, and Elasticsearch interactions.
+👉 **[Read the API Architecture Constraints](./management_api/ARCHITECTURE.md)**
 
-## 3. Design Philosophy
-- **DRY (Don't Repeat Yourself):** If multiple index templates share the same mappings (e.g., `timestamp`, `trace_id`), those mappings must be extracted into a `component_template`.
-- **Dynamic Mapping Strictness:** Default to `dynamic: "strict"` or `"false"` to prevent mapping explosions, unless otherwise specified by the user.
+### [Frontend: `management_ui`](./management_ui/ARCHITECTURE.md)
+The Next.js-based user interface for operators to interact with the management services.
+👉 **[Read the UI Architecture Constraints](./management_ui/ARCHITECTURE.md)**
+
+## 2. Macro Architecture Boundaries
+
+At the root level, agents and developers must respect the following strict boundaries:
+
+- **Strict Separation of Concerns:**
+  - The UI (`management_ui`) is strictly for presentation and user interaction. It must NEVER contain direct database connections or heavy data processing logic.
+  - The API (`management_api`) is the sole owner of business logic and data state.
+
+- **Independent Execution Contexts:**
+  - The two submodules manage their own dependencies independently.
+  - **Never** attempt to run `npm` or `uv` commands at the root `/elasticsearch-management` level.
+  - Always `cd` into the appropriate submodule before executing linting, testing, or server start commands.
+
+- **Type & Schema Synchronization:**
+  - The API defines the canonical data contracts (via Pydantic). 
+  - If an API response schema changes, the corresponding TypeScript interfaces/types in `management_ui/types/` MUST be updated to reflect those changes.
