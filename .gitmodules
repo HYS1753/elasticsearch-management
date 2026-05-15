@@ -1,0 +1,6 @@
+[submodule "management_api"]
+	path = management_api
+	url = https://github.com/HYS1753/elasticsearch-management-tool-api.git
+[submodule "management-ui"]
+	path = management-ui
+	url = https://github.com/HYS1753/elasticsearch-management-tool.git
