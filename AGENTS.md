@@ -108,6 +108,13 @@ Follow a tiered approach to ensure reliability without bloating test execution t
 2. **Surgical Assertions:** Check specific response fields and custom exceptions from `config/exceptions/`.
 3. **No Side Effects:** Ensure tests do not persist data to production `models/` or `logs/`.
 
+## 8. Programming Languages & Coding Constraints
+
+- **TypeScript Standard (Frontend):**
+  - Inside the `management_ui/` submodule, **ALL** newly created files, helper scripts, components, configurations, page files, or utility tools MUST be implemented in TypeScript (`.ts`, `.tsx`).
+  - The use of JavaScript (`.js`, `.jsx`, `.mjs`) for new code is strictly prohibited.
+  - Any remaining helper scripts or legacy JavaScript configuration scripts must be migrated to TypeScript when they are modified.
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
