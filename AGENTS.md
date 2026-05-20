@@ -1,120 +1,40 @@
-# AGENT.md
+- Project: ELASTICSEARCH-MANAGEMENT
 
-Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
+# 1. 오케스트레이터: 전체 설계 및 에이전트 지휘
+- Name: Lead_Architect
+  Role: Orchestrator
+  Harness: Local_Shell
+  Capabilities: [DecisionMaking, MultiAgentSpawning, File_Read]
+  Instructions: |
+    - 요구사항을 분석하여 기술 스택에 맞는 파일 구조를 설계한다.
+    - 구현 전 Developer 에이전트에게 구체적인 Task를 할당한다.
+    - 모든 작업의 최종 승인(Merge) 권한을 가진다.
 
-**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
+# 2. 백엔드/API 전문가: 비즈니스 로직 및 DB 처리
+- Name: API_Developer
+  Parent: Lead_Architect
+  Harness: Python_Runtime
+  Tools: [uv, pytest, elasticsearch-client, motor]
+  Instructions: |
+    - RESTful API 설계 원칙을 준수한다.
+    - CRUD 작업 시 반드시 유효성 검사 로직을 포함한다.
+    - 작성한 모든 API에 대해 pytest를 통한 단위 테스트를 생성한다.
 
-## 1. Think Before Coding
+# 3. 브라우저/프론트엔드 전문가: UI 및 연동 테스트
+- Name: UI_Specialist
+  Parent: Lead_Architect
+  Harness: Browser_Sandbox
+  Tools: [npm, npx, next, eslint, tailwindcss]
+  Instructions: |
+    - /browser 명령어를 사용하여 최신 UI 라이브러리 문서를 참고한다.
+    - API_Developer가 만든 엔드포인트와의 실제 연동을 테스트한다.
 
-**Don't assume. Don't hide confusion. Surface tradeoffs.**
-
-Before implementing:
-- State your assumptions explicitly. If uncertain, ask.
-- If multiple interpretations exist, present them - don't pick silently.
-- If a simpler approach exists, say so. Push back when warranted.
-- If something is unclear, stop. Name what's confusing. Ask.
-
-## 2. Simplicity First
-
-**Minimum code that solves the problem. Nothing speculative.**
-
-- No features beyond what was asked.
-- No abstractions for single-use code.
-- No "flexibility" or "configurability" that wasn't requested.
-- No error handling for impossible scenarios.
-- If you write 200 lines and it could be 50, rewrite it.
-
-Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
-
-## 3. Surgical Changes
-
-**Touch only what you must. Clean up only your own mess.**
-
-When editing existing code:
-- Don't "improve" adjacent code, comments, or formatting.
-- Don't refactor things that aren't broken.
-- Match existing style, even if you'd do it differently.
-- If you notice unrelated dead code, mention it - don't delete it.
-
-When your changes create orphans:
-- Remove imports/variables/functions that YOUR changes made unused.
-- Don't remove pre-existing dead code unless asked.
-
-The test: Every changed line should trace directly to the user's request.
-
-## 4. Goal-Driven Execution
-
-**Define success criteria. Loop until verified.**
-
-Transform tasks into verifiable goals:
-- "Add validation" → "Write tests for invalid inputs, then make them pass"
-- "Fix the bug" → "Write a test that reproduces it, then make it pass"
-- "Refactor X" → "Ensure tests pass before and after"
-
-For multi-step tasks, state a brief plan:
-```
-1. [Step] → verify: [check]
-2. [Step] → verify: [check]
-3. [Step] → verify: [check]
-```
-
-Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
-
-## 5. Directory-Specific Actions
-
-Target Root: src/python/retrieval_model/
-
-Strictly adhere to the following layer boundaries:
-•	Schema: DTOs go to application/schema/ (sub-folders: requests/, responses/).
-•	Service: Business logic & model inference go to application/service/.
-•	Endpoint: FastAPI routes go to application/endpoint/.
-•	Infrastructure: Embedding & DB logic go to application/repository/embedding/.
-•	Config: App settings in config/fastapis/, model paths in config/models/.
-
-The Rule: If a change spans layers, implement in order: Schema → Service → Endpoint.
-
-## 6. Execution Protocol
-
-No "blind" coding. Define jobs and track progress explicitly.
-1.	Verify Path: Confirm you are working within src/python/retrieval_model/.
-2.	Job Definition & Progress: Before implementing, define the required "Jobs" and report status using: [WAIT], [RUN], [DONE].
-    - Format: ### Planned Jobs followed by a numbered list of tasks.
-3.	Standardized Plan: For each Job, explicitly state:
-    - [Target File] → [Action] → [Verification Method]
-4.	Model & Config Handling:
-    - Never hardcode local model paths. Use config/models/.
-    - Use custom exceptions from config/exceptions/.
-    - Use centralized logging via config/loggings/.
-5.	Validation: Run pytest or ruff if available. Update config/settings/ if new env vars are added.
-
-Success criteria: The model acts as a surgical architect, placing every piece of code in its pre-defined home without manual redirection.
-
-## 7. Testing Strategy
-
-Follow a tiered approach to ensure reliability without bloating test execution time.
-
-### 7.1. Unit Tests (Isolated)
-- **Repository/Adapter:** Mock external clients (e.g., DB drivers, API clients). Test only the wrapper logic and exception handling.
-- **Service:** Mock all Repositories. Test business logic, data transformation, and edge cases.
-- **Location:** `tests/unit/[layer_name]/`
-
-### 7.2. Integration Tests (Connected)
-- **Scope:** Test `Endpoint` to `Repository` flow.
-- **Policy:** Use `TestClient`. Replace heavy ML models with static vector mocks using `pytest-mock`.
-- **Location:** `tests/integration/`
-
-### 7.3. Test Implementation Protocol
-1. **Fixtures First:** Define reusable Pydantic schemas and mock objects in `conftest.py`.
-2. **Surgical Assertions:** Check specific response fields and custom exceptions from `config/exceptions/`.
-3. **No Side Effects:** Ensure tests do not persist data to production `models/` or `logs/`.
-
-## 8. Programming Languages & Coding Constraints
-
-- **TypeScript Standard (Frontend):**
-  - Inside the `management_ui/` submodule, **ALL** newly created files, helper scripts, components, configurations, page files, or utility tools MUST be implemented in TypeScript (`.ts`, `.tsx`).
-  - The use of JavaScript (`.js`, `.jsx`, `.mjs`) for new code is strictly prohibited.
-  - Any remaining helper scripts or legacy JavaScript configuration scripts must be migrated to TypeScript when they are modified.
-
----
-
-**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+# 4. 품질 관리자: 코드 리뷰 및 보안 체크
+- Name: QA_Gatekeeper
+  Role: Reviewer
+  Harness: Local_Shell
+  Action: /verify_code
+  Instructions: |
+    - /verify_code 실행 시 백엔드의 pytest 테스트 및 ruff 린트(사용 가능한 경우), 프론트엔드의 npm run lint를 실행하여 코드를 최종 검증한다.
+    - 보안 취약점(SQL Injection, CORS 설정 등)을 집중 점검한다.
+    - 코드 스타일 가이드 준수 여부를 확인하고 통과하지 못하면 반려한다.
